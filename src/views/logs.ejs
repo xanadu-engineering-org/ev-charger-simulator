@@ -1,0 +1,42 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>OCPP Logs</title>
+  <link rel="stylesheet" href="/public/styles.css">
+</head>
+<body>
+  <%- include('layout') %>
+  <main class="container">
+    <section class="card">
+      <div class="card-header">
+        <h2>OCPP Logs</h2>
+        <a href="/" class="link">Back to Dashboard</a>
+      </div>
+      <table class="logs-table">
+        <thead>
+          <tr>
+            <th>ID</th>
+            <th>Timestamp</th>
+            <th>Dir</th>
+            <th>Action</th>
+            <th>Payload</th>
+          </tr>
+        </thead>
+        <tbody>
+          <% logs.forEach(function(log) { %>
+            <tr>
+              <td><%= log.id %></td>
+              <td><%= log.ts %></td>
+              <td><%= log.direction %></td>
+              <td><%= log.action %></td>
+              <td><pre><%= JSON.stringify(JSON.parse(log.raw_json || '{}'), null, 2) %></pre></td>
+            </tr>
+          <% }) %>
+        </tbody>
+      </table>
+    </section>
+  </main>
+</body>
+</html>

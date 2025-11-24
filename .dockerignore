@@ -1,0 +1,9 @@
+node_modules
+npm-debug.log
+Dockerfile
+.git
+.gitignore
+ocpp-sim.db
+*.sqlite
+*.db
+.env

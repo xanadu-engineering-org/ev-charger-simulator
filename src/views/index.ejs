@@ -1,0 +1,132 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>OCPP Simulator</title>
+  <link rel="stylesheet" href="/public/styles.css">
+</head>
+<body>
+  <%- include('layout') %>
+
+  <main class="container">
+    <section class="card">
+      <div class="card-header">
+        <h2>Connection</h2>
+        <div class="status">
+          <span class="dot <%= connected ? 'online' : 'offline' %>"></span>
+          <span><%= connected ? 'WebSocket Connected' : 'Disconnected' %></span>
+          <span class="dot <%= bootAccepted ? 'online' : 'offline' %>"></span>
+          <span><%= bootAccepted ? 'Boot Accepted' : 'Awaiting BootNotification' %></span>
+          <span>Heartbeat: <%= heartbeatInterval %>s</span>
+        </div>
+      </div>
+      <form class="form-grid" action="/connect" method="POST">
+        <label>
+          OCPP Server URL
+          <input type="text" name="ocppUrl" value="<%= ocppUrl %>" required>
+        </label>
+        <label>
+          Charge Point ID
+          <input type="text" name="chargePointId" value="<%= chargePointId %>" required>
+        </label>
+        <label>
+          Vendor
+          <input type="text" name="chargePointVendor" value="<%= chargePointVendor %>" required>
+        </label>
+        <label>
+          Model
+          <input type="text" name="chargePointModel" value="<%= chargePointModel %>" required>
+        </label>
+        <% if (!connected) { %>
+          <button type="submit" class="primary">Connect</button>
+        <% } %>
+      </form>
+      <% if (connected) { %>
+        <div class="actions">
+          <form action="/disconnect" method="POST">
+            <button type="submit" class="danger">Disconnect</button>
+          </form>
+          <form action="/reconnect" method="POST">
+            <button type="submit" class="primary">Reconnect</button>
+          </form>
+        </div>
+      <% } %>
+    </section>
+    <% if (errorMessage) { %>
+      <div class="modal-overlay show" id="error-modal">
+        <div class="modal">
+          <h3>Error</h3>
+          <p><%= errorMessage %></p>
+          <button class="primary" id="close-modal">Close</button>
+        </div>
+      </div>
+      <script>
+        (function () {
+          const overlay = document.getElementById('error-modal');
+          const closeBtn = document.getElementById('close-modal');
+          function closeModal() {
+            overlay.classList.remove('show');
+            const url = new URL(window.location.href);
+            url.searchParams.delete('error');
+            window.history.replaceState({}, '', url.toString());
+          }
+          closeBtn.addEventListener('click', function (e) {
+            e.preventDefault();
+            closeModal();
+          });
+        })();
+      </script>
+    <% } %>
+
+    <section>
+      <h2>Connectors</h2>
+      <div class="connector-grid">
+        <% connectors.forEach(function(conn) { %>
+          <div class="card connector-card">
+            <div class="card-header">
+              <div>
+                <strong>Connector <%= conn.id %></strong>
+                <span class="state badge"><%= conn.state %></span>
+              </div>
+              <div>Meter: <%= conn.meterWh %> Wh</div>
+            </div>
+            <div class="connector-body">
+              <form action="/actions/<%= conn.id %>/presentToken" method="POST">
+                <label>Id Tag
+                  <input type="text" name="idTag" value="<%= conn.idTag %>" placeholder="RFID / tag">
+                </label>
+                <button type="submit">Present Token</button>
+              </form>
+
+              <div class="actions">
+                <form action="/actions/<%= conn.id %>/plugIn" method="POST">
+                  <button type="submit">Plug In EV</button>
+                </form>
+                <form action="/actions/<%= conn.id %>/unplug" method="POST">
+                  <button type="submit">Unplug EV</button>
+                </form>
+              </div>
+
+              <div class="actions">
+                <form action="/actions/<%= conn.id %>/startCharging" method="POST">
+                  <input type="hidden" name="idTag" value="<%= conn.idTag %>">
+                  <button type="submit" class="primary">Local Start</button>
+                </form>
+                <form action="/actions/<%= conn.id %>/stopCharging" method="POST">
+                  <button type="submit" class="danger">Local Stop</button>
+                </form>
+              </div>
+
+              <dl class="meta">
+                <div><dt>Plugged:</dt><dd><%= conn.pluggedIn ? 'Yes' : 'No' %></dd></div>
+                <div><dt>Transaction:</dt><dd><%= conn.transactionId || '-' %></dd></div>
+              </dl>
+            </div>
+          </div>
+        <% }); %>
+      </div>
+    </section>
+  </main>
+</body>
+</html>
