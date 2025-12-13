@@ -103,10 +103,11 @@ class ChargerState extends EventEmitter {
 
   async startCharging(connectorId, options = {}) {
     const connector = this.connectors[connectorId - 1];
-    const idTag = options.idTag || connector.idTag;
+    const idTag = (options.idTag || connector.idTag || '').trim();
     if (!idTag) {
       return { ok: false, message: 'idTag required' };
     }
+    connector.idTag = idTag;
     if (!this.ocppClient || !this.ocppClient.isReady()) {
       return { ok: false, message: 'OCPP not connected' };
     }

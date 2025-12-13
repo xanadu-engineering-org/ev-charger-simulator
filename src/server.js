@@ -1,16 +1,33 @@
 require('dotenv').config();
+// #region agent log
+fetch('http://127.0.0.1:7243/ingest/20fc2c36-7f99-43af-85b8-6abf4fc6304b', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ location: 'server.js:2', message: 'Node.js version info', data: { nodeVersion: process.version, nodeModuleVersion: process.versions.modules, platform: process.platform, arch: process.arch }, timestamp: Date.now(), sessionId: 'debug-session', runId: 'post-fix', hypothesisId: 'A' }) }).catch(() => { });
+// #endregion
 const path = require('path');
 const express = require('express');
-const Database = require('./src/db/Database');
-const ChargerState = require('./src/charger/ChargerState');
-const OcppClient = require('./src/ocpp/OcppClient');
+// #region agent log
+fetch('http://127.0.0.1:7243/ingest/20fc2c36-7f99-43af-85b8-6abf4fc6304b', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ location: 'server.js:6', message: 'Before requiring Database module', data: {}, timestamp: Date.now(), sessionId: 'debug-session', runId: 'post-fix', hypothesisId: 'B' }) }).catch(() => { });
+// #endregion
+let Database;
+try {
+  Database = require('./db/Database');
+  // #region agent log
+  fetch('http://127.0.0.1:7243/ingest/20fc2c36-7f99-43af-85b8-6abf4fc6304b', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ location: 'server.js:11', message: 'Database module loaded successfully', data: {}, timestamp: Date.now(), sessionId: 'debug-session', runId: 'post-fix', hypothesisId: 'C' }) }).catch(() => { });
+  // #endregion
+} catch (err) {
+  // #region agent log
+  fetch('http://127.0.0.1:7243/ingest/20fc2c36-7f99-43af-85b8-6abf4fc6304b', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ location: 'server.js:14', message: 'Error loading Database module', data: { errorMessage: err.message, errorCode: err.code, errorStack: err.stack }, timestamp: Date.now(), sessionId: 'debug-session', runId: 'run1', hypothesisId: 'D' }) }).catch(() => { });
+  // #endregion
+  throw err;
+}
+const ChargerState = require('./charger/ChargerState');
+const OcppClient = require('./ocpp/OcppClient');
 
 const app = express();
 const PORT = process.env.PORT || 3030;
 
 app.set('view engine', 'ejs');
-app.set('views', path.join(__dirname, 'src/views'));
-app.use('/public', express.static(path.join(__dirname, 'src/public')));
+app.set('views', path.join(__dirname, 'views'));
+app.use('/public', express.static(path.join(__dirname, 'public')));
 app.use(express.urlencoded({ extended: true }));
 app.use(express.json());
 
@@ -128,25 +145,19 @@ app.get('/logs', (req, res) => {
   res.render('logs', { logs });
 });
 
-// Fallback error handler to keep server alive
-// eslint-disable-next-line no-unused-vars
 app.use((err, req, res, next) => {
-  // eslint-disable-next-line no-console
   console.error('Unhandled error:', err);
   res.status(500).send('Unexpected error occurred');
 });
 
 process.on('unhandledRejection', (reason) => {
-  // eslint-disable-next-line no-console
   console.error('Unhandled rejection:', reason);
 });
 
 process.on('uncaughtException', (err) => {
-  // eslint-disable-next-line no-console
   console.error('Uncaught exception:', err);
 });
 
 app.listen(PORT, () => {
-  // eslint-disable-next-line no-console
   console.log(`OCPP simulator running on http://localhost:${PORT}`);
 });

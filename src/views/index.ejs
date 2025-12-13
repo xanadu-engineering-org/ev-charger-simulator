@@ -94,9 +94,12 @@
             <div class="connector-body">
               <form action="/actions/<%= conn.id %>/presentToken" method="POST">
                 <label>Id Tag
-                  <input type="text" name="idTag" value="<%= conn.idTag %>" placeholder="RFID / tag">
+                  <input type="text" name="idTag" value="<%= conn.idTag %>" placeholder="RFID / tag" required>
                 </label>
-                <button type="submit">Present Token</button>
+                <div class="actions">
+                  <button type="submit">Present Token</button>
+                  <button type="submit" formaction="/actions/<%= conn.id %>/startCharging" class="primary">Local Start</button>
+                </div>
               </form>
 
               <div class="actions">
@@ -109,10 +112,6 @@
               </div>
 
               <div class="actions">
-                <form action="/actions/<%= conn.id %>/startCharging" method="POST">
-                  <input type="hidden" name="idTag" value="<%= conn.idTag %>">
-                  <button type="submit" class="primary">Local Start</button>
-                </form>
                 <form action="/actions/<%= conn.id %>/stopCharging" method="POST">
                   <button type="submit" class="danger">Local Stop</button>
                 </form>
