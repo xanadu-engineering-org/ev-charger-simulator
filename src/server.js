@@ -52,6 +52,39 @@ let ocppClient = new OcppClient({
 });
 chargerState.setOcppClient(ocppClient);
 
+// API endpoint to get all connectors status
+app.get('/api/connectors', (req, res) => {
+  const connectors = chargerState.getConnectors().map(conn => ({
+    id: conn.id,
+    state: conn.state,
+    pluggedIn: conn.pluggedIn,
+    idTag: conn.idTag,
+    transactionId: conn.transactionId,
+    meterWh: conn.meterWh,
+  }));
+  res.json({ connectors });
+});
+
+// API endpoint to get specific connector status
+app.get('/api/connectors/:connectorId', (req, res) => {
+  const connectorId = Number(req.params.connectorId);
+  const connectors = chargerState.getConnectors();
+  const connector = connectors.find(c => c.id === connectorId);
+  
+  if (!connector) {
+    return res.status(404).json({ error: 'Connector not found' });
+  }
+  
+  res.json({
+    id: connector.id,
+    state: connector.state,
+    pluggedIn: connector.pluggedIn,
+    idTag: connector.idTag,
+    transactionId: connector.transactionId,
+    meterWh: connector.meterWh,
+  });
+});
+
 app.get('/', (req, res) => {
   res.render('index', {
     ocppUrl: ocppClient.wsUrl || connectionConfig.ocppUrl,

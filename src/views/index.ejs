@@ -88,6 +88,9 @@
               <div>
                 <strong>Connector <%= conn.id %></strong>
                 <span class="state badge"><%= conn.state %></span>
+                <span class="plug-status badge <%= conn.pluggedIn ? 'plugged' : 'unplugged' %>">
+                  <%= conn.pluggedIn ? '🔌 Plugged In' : '🔌 Not Plugged' %>
+                </span>
               </div>
               <div>Meter: <%= conn.meterWh %> Wh</div>
             </div>
@@ -98,7 +101,7 @@
                 </label>
                 <div class="actions">
                   <button type="submit">Present Token</button>
-                  <button type="submit" formaction="/actions/<%= conn.id %>/startCharging" class="primary">Local Start</button>
+                  <button type="submit" formaction="/actions/<%= conn.id %>/startCharging" class="primary" <%= !conn.pluggedIn ? 'disabled title="EV must be plugged in to start charging"' : '' %>>Local Start</button>
                 </div>
               </form>
 
@@ -127,5 +130,38 @@
       </div>
     </section>
   </main>
+  <style>
+    .plug-status.badge {
+      margin-left: 10px;
+      padding: 4px 8px;
+      border-radius: 4px;
+      font-size: 0.9em;
+    }
+    .plug-status.plugged {
+      background-color: #4caf50;
+      color: white;
+    }
+    .plug-status.unplugged {
+      background-color: #9e9e9e;
+      color: white;
+    }
+    button:disabled {
+      opacity: 0.5;
+      cursor: not-allowed;
+    }
+  </style>
+  <script>
+    // Auto-refresh connector status every 2 seconds
+    setInterval(() => {
+      fetch('/api/connectors')
+        .then(res => res.json())
+        .then(data => {
+          // Update the page by reloading if connector states have changed
+          // Simple approach: reload page every 5 seconds if we want auto-update
+          // For now, just let user manually refresh or reload on form submission
+        })
+        .catch(err => console.error('Error fetching connector status:', err));
+    }, 2000);
+  </script>
 </body>
 </html>

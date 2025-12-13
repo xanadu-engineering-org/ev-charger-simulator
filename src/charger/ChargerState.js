@@ -75,17 +75,27 @@ class ChargerState extends EventEmitter {
   async presentToken(connectorId, idTag) {
     const connector = this.connectors[connectorId - 1];
     connector.idTag = idTag;
-    if (connector.state === STATES.AVAILABLE && connector.pluggedIn) {
-      await this.transition(connector, STATES.PREPARING);
-    }
+    // Don't auto-transition to PREPARING - charging should be explicitly started
+    // presentToken just stores the idTag, user must click "Start Charging"
     return { ok: true };
   }
 
   async plugIn(connectorId) {
     const connector = this.connectors[connectorId - 1];
     connector.pluggedIn = true;
+    // Emit pluggedIn event - charging should not start automatically
+    this.emit('pluggedIn', { connectorId: connector.id, pluggedIn: true });
+    // Only send status notification if state needs to change (e.g., not already in a charging state)
     if (connector.state === STATES.AVAILABLE) {
-      await this.transition(connector, STATES.PREPARING);
+      // Send status notification but don't auto-transition to PREPARING
+      // Keep state as AVAILABLE until user explicitly starts charging
+      try {
+        if (this.ocppClient && this.ocppClient.isReady()) {
+          await this.ocppClient.sendStatusNotification(connector.id, STATES.AVAILABLE);
+        }
+      } catch (err) {
+        // keep simulator running even if OCPP call fails
+      }
     }
     return { ok: true };
   }
@@ -93,6 +103,8 @@ class ChargerState extends EventEmitter {
   async unplug(connectorId) {
     const connector = this.connectors[connectorId - 1];
     connector.pluggedIn = false;
+    // Emit pluggedOut event
+    this.emit('pluggedOut', { connectorId: connector.id, pluggedIn: false });
     if (connector.state === STATES.CHARGING) {
       await this.stopCharging(connectorId, 'EVDisconnected');
     }
@@ -103,6 +115,10 @@ class ChargerState extends EventEmitter {
 
   async startCharging(connectorId, options = {}) {
     const connector = this.connectors[connectorId - 1];
+    // Check if connector is plugged in
+    if (!connector.pluggedIn) {
+      return { ok: false, message: 'EV must be plugged in before starting charging' };
+    }
     const idTag = (options.idTag || connector.idTag || '').trim();
     if (!idTag) {
       return { ok: false, message: 'idTag required' };
