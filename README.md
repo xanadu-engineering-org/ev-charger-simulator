@@ -25,11 +25,28 @@ Visit http://localhost:3030.
 ## Configuration
 Environment variables (via `.env` or inline):
 - `PORT` (default `3030`)
-- `OCPP_URL` (default `ws://localhost:3020/ocpp`)
+- `CSMS_SERVER_BASE_URL` (default `http://localhost:3020`) - HTTP base URL for CSMS server
+- `CSMS_WEBSOCKET_BASE_URL` (default `ws://localhost:3020`) - WebSocket base URL for CSMS server
+- `OCPP_URL` (optional, constructed from `CSMS_WEBSOCKET_BASE_URL/ocpp` if not set) - Full WebSocket URL for OCPP connection. Can be explicitly set for backward compatibility or custom configurations.
 - `CHARGE_POINT_ID` (default `ME-001`)
 - `CHARGE_POINT_VENDOR` (default `MetroElectric`)
 - `CHARGE_POINT_MODEL` (default `Virtual-1`)
 - `CONNECTORS` (default `2`; set to `1` to force single connector)
+
+### URL Configuration Examples
+
+**Using base URLs (recommended):**
+```bash
+CSMS_SERVER_BASE_URL=http://localhost:3020
+CSMS_WEBSOCKET_BASE_URL=ws://localhost:3020
+```
+This will automatically construct the OCPP URL as `ws://localhost:3020/ocpp` (chargePointId will be appended by the client if needed).
+
+**Using explicit OCPP_URL (backward compatible):**
+```bash
+OCPP_URL=ws://localhost:3020/ocpp/ME-001
+```
+If `OCPP_URL` is explicitly set, it takes precedence over the base URL configuration.
 
 SQLite database: `ocpp-sim.db` in project root (auto-created with schema from `src/db/schema.sql`).
 
@@ -37,6 +54,16 @@ SQLite database: `ocpp-sim.db` in project root (auto-created with schema from `s
 Build and run:
 ```bash
 docker build -t ev-charger-sim .
+docker run -p 3030:3030 \
+  -e CSMS_SERVER_BASE_URL=http://host.docker.internal:3020 \
+  -e CSMS_WEBSOCKET_BASE_URL=ws://host.docker.internal:3020 \
+  -e CHARGE_POINT_ID=ME-001 \
+  -v "$(pwd)/ocpp-sim.db":/app/ocpp-sim.db \
+  ev-charger-sim
+```
+
+Or using the explicit OCPP_URL (backward compatible):
+```bash
 docker run -p 3030:3030 \
   -e OCPP_URL=ws://host.docker.internal:3020/ocpp \
   -e CHARGE_POINT_ID=ME-001 \
@@ -91,6 +118,6 @@ README.md
 - Heartbeat interval updates when CSMS accepts BootNotification with an interval value.
 
 ## Troubleshooting
-- Cannot connect: verify `OCPP_URL` is reachable and includes the `/ocpp` path and chargePointId if required by CSMS.
+- Cannot connect: verify `CSMS_WEBSOCKET_BASE_URL` (or `OCPP_URL`) is reachable and includes the `/ocpp` path. The chargePointId will be automatically appended by the OCPP client if needed.
 - BootNotification not accepted: check charge point identity values; some CSMS validate vendor/model.
 - Meter values not appearing: ensure charging is active and heartbeat/status are accepted; check logs page for outgoing `MeterValues`.

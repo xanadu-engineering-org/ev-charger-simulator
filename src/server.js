@@ -1,22 +1,10 @@
 require('dotenv').config();
-// #region agent log
-fetch('http://127.0.0.1:7243/ingest/20fc2c36-7f99-43af-85b8-6abf4fc6304b', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ location: 'server.js:2', message: 'Node.js version info', data: { nodeVersion: process.version, nodeModuleVersion: process.versions.modules, platform: process.platform, arch: process.arch }, timestamp: Date.now(), sessionId: 'debug-session', runId: 'post-fix', hypothesisId: 'A' }) }).catch(() => { });
-// #endregion
 const path = require('path');
 const express = require('express');
-// #region agent log
-fetch('http://127.0.0.1:7243/ingest/20fc2c36-7f99-43af-85b8-6abf4fc6304b', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ location: 'server.js:6', message: 'Before requiring Database module', data: {}, timestamp: Date.now(), sessionId: 'debug-session', runId: 'post-fix', hypothesisId: 'B' }) }).catch(() => { });
-// #endregion
 let Database;
 try {
   Database = require('./db/Database');
-  // #region agent log
-  fetch('http://127.0.0.1:7243/ingest/20fc2c36-7f99-43af-85b8-6abf4fc6304b', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ location: 'server.js:11', message: 'Database module loaded successfully', data: {}, timestamp: Date.now(), sessionId: 'debug-session', runId: 'post-fix', hypothesisId: 'C' }) }).catch(() => { });
-  // #endregion
 } catch (err) {
-  // #region agent log
-  fetch('http://127.0.0.1:7243/ingest/20fc2c36-7f99-43af-85b8-6abf4fc6304b', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ location: 'server.js:14', message: 'Error loading Database module', data: { errorMessage: err.message, errorCode: err.code, errorStack: err.stack }, timestamp: Date.now(), sessionId: 'debug-session', runId: 'run1', hypothesisId: 'D' }) }).catch(() => { });
-  // #endregion
   throw err;
 }
 const ChargerState = require('./charger/ChargerState');
@@ -36,9 +24,23 @@ const db = new Database(dbPath);
 const connectorCount = Number(process.env.CONNECTORS || 2);
 const chargerState = new ChargerState({ connectorCount, db });
 
+const CSMS_SERVER_BASE_URL = process.env.CSMS_SERVER_BASE_URL || 'http://localhost:3020';
+const CSMS_WEBSOCKET_BASE_URL = process.env.CSMS_WEBSOCKET_BASE_URL || 'ws://localhost:3020';
+const CHARGE_POINT_ID = process.env.CHARGE_POINT_ID || 'ME-001';
+
+let ocppUrl;
+if (process.env.OCPP_URL) {
+  ocppUrl = process.env.OCPP_URL;
+} else {
+  const wsBase = CSMS_WEBSOCKET_BASE_URL.replace(/\/$/, '');
+  ocppUrl = `${wsBase}/ocpp`;
+}
+
 let connectionConfig = {
-  ocppUrl: process.env.OCPP_URL || 'ws://localhost:3020/ocpp',
-  chargePointId: process.env.CHARGE_POINT_ID || 'ME-001',
+  ocppUrl: ocppUrl,
+  csmsServerBaseUrl: CSMS_SERVER_BASE_URL,
+  csmsWebSocketBaseUrl: CSMS_WEBSOCKET_BASE_URL,
+  chargePointId: CHARGE_POINT_ID,
   chargePointVendor: process.env.CHARGE_POINT_VENDOR || 'MetroElectric',
   chargePointModel: process.env.CHARGE_POINT_MODEL || 'Virtual-1',
 };
@@ -52,7 +54,6 @@ let ocppClient = new OcppClient({
 });
 chargerState.setOcppClient(ocppClient);
 
-// API endpoint to get all connectors status
 app.get('/api/connectors', (req, res) => {
   const connectors = chargerState.getConnectors().map(conn => ({
     id: conn.id,
@@ -70,11 +71,11 @@ app.get('/api/connectors/:connectorId', (req, res) => {
   const connectorId = Number(req.params.connectorId);
   const connectors = chargerState.getConnectors();
   const connector = connectors.find(c => c.id === connectorId);
-  
+
   if (!connector) {
     return res.status(404).json({ error: 'Connector not found' });
   }
-  
+
   res.json({
     id: connector.id,
     state: connector.state,
@@ -101,8 +102,12 @@ app.get('/', (req, res) => {
 
 app.post('/connect', async (req, res) => {
   const { ocppUrl, chargePointId, chargePointVendor, chargePointModel } = req.body;
+  // If ocppUrl is provided in form, use it; otherwise keep existing from env/config
+  const finalOcppUrl = ocppUrl || connectionConfig.ocppUrl;
   connectionConfig = {
-    ocppUrl: ocppUrl || connectionConfig.ocppUrl,
+    ocppUrl: finalOcppUrl,
+    csmsServerBaseUrl: connectionConfig.csmsServerBaseUrl,
+    csmsWebSocketBaseUrl: connectionConfig.csmsWebSocketBaseUrl,
     chargePointId: chargePointId || connectionConfig.chargePointId,
     chargePointVendor: chargePointVendor || connectionConfig.chargePointVendor,
     chargePointModel: chargePointModel || connectionConfig.chargePointModel,

@@ -85,13 +85,15 @@ class ChargerState extends EventEmitter {
     connector.pluggedIn = true;
     // Emit pluggedIn event - charging should not start automatically
     this.emit('pluggedIn', { connectorId: connector.id, pluggedIn: true });
-    // Only send status notification if state needs to change (e.g., not already in a charging state)
+    // Transition to PREPARING state when plugged in (this represents "plugged in, ready for charging")
+    // This doesn't start charging - charging only starts when startCharging() is explicitly called
     if (connector.state === STATES.AVAILABLE) {
-      // Send status notification but don't auto-transition to PREPARING
-      // Keep state as AVAILABLE until user explicitly starts charging
       try {
         if (this.ocppClient && this.ocppClient.isReady()) {
-          await this.ocppClient.sendStatusNotification(connector.id, STATES.AVAILABLE);
+          // Send PREPARING state notification - this correctly indicates plugged in but not charging
+          await this.ocppClient.sendStatusNotification(connector.id, STATES.PREPARING);
+          // Update local state to PREPARING for consistency
+          connector.state = STATES.PREPARING;
         }
       } catch (err) {
         // keep simulator running even if OCPP call fails
@@ -128,7 +130,10 @@ class ChargerState extends EventEmitter {
       return { ok: false, message: 'OCPP not connected' };
     }
 
-    await this.transition(connector, STATES.PREPARING);
+    // Only transition to PREPARING if not already there (e.g., if already in PREPARING from plugIn, skip this)
+    if (connector.state !== STATES.PREPARING) {
+      await this.transition(connector, STATES.PREPARING);
+    }
     let authResp;
     try {
       authResp = await this.ocppClient.sendAuthorize(idTag);

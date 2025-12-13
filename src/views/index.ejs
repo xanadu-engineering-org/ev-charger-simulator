@@ -83,16 +83,16 @@
       <h2>Connectors</h2>
       <div class="connector-grid">
         <% connectors.forEach(function(conn) { %>
-          <div class="card connector-card">
+          <div class="card connector-card" id="connector-card-<%= conn.id %>">
             <div class="card-header">
               <div>
                 <strong>Connector <%= conn.id %></strong>
-                <span class="state badge"><%= conn.state %></span>
-                <span class="plug-status badge <%= conn.pluggedIn ? 'plugged' : 'unplugged' %>">
+                <span class="state badge" id="state-badge-<%= conn.id %>"><%= conn.state %></span>
+                <span class="plug-status badge <%= conn.pluggedIn ? 'plugged' : 'unplugged' %>" id="plug-badge-<%= conn.id %>">
                   <%= conn.pluggedIn ? '🔌 Plugged In' : '🔌 Not Plugged' %>
                 </span>
               </div>
-              <div>Meter: <%= conn.meterWh %> Wh</div>
+              <div>Meter: <span id="meter-<%= conn.id %>"><%= conn.meterWh %></span> Wh</div>
             </div>
             <div class="connector-body">
               <form action="/actions/<%= conn.id %>/presentToken" method="POST">
@@ -101,7 +101,7 @@
                 </label>
                 <div class="actions">
                   <button type="submit">Present Token</button>
-                  <button type="submit" formaction="/actions/<%= conn.id %>/startCharging" class="primary" <%= !conn.pluggedIn ? 'disabled title="EV must be plugged in to start charging"' : '' %>>Local Start</button>
+                  <button type="submit" formaction="/actions/<%= conn.id %>/startCharging" class="primary" id="startBtn-<%= conn.id %>" <%= !conn.pluggedIn ? 'disabled title="EV must be plugged in to start charging"' : '' %>>Local Start</button>
                 </div>
               </form>
 
@@ -121,8 +121,8 @@
               </div>
 
               <dl class="meta">
-                <div><dt>Plugged:</dt><dd><%= conn.pluggedIn ? 'Yes' : 'No' %></dd></div>
-                <div><dt>Transaction:</dt><dd><%= conn.transactionId || '-' %></dd></div>
+                <div><dt>Plugged:</dt><dd id="plugged-status-<%= conn.id %>"><%= conn.pluggedIn ? 'Yes' : 'No' %></dd></div>
+                <div><dt>Transaction:</dt><dd id="transaction-<%= conn.id %>"><%= conn.transactionId || '-' %></dd></div>
               </dl>
             </div>
           </div>
@@ -151,17 +151,132 @@
     }
   </style>
   <script>
-    // Auto-refresh connector status every 2 seconds
+    // Auto-refresh connector status every 2 seconds and update button states and display
     setInterval(() => {
       fetch('/api/connectors')
         .then(res => res.json())
         .then(data => {
-          // Update the page by reloading if connector states have changed
-          // Simple approach: reload page every 5 seconds if we want auto-update
-          // For now, just let user manually refresh or reload on form submission
+          if (data.connectors) {
+            data.connectors.forEach(conn => {
+              // Update state badge
+              const stateBadge = document.getElementById('state-badge-' + conn.id);
+              if (stateBadge) {
+                const stateValue = String(conn.state || 'Unknown').trim();
+                stateBadge.textContent = stateValue;
+                // Update badge class based on state
+                stateBadge.className = 'state badge';
+                // Reset styles first
+                stateBadge.style.backgroundColor = '';
+                stateBadge.style.color = '';
+                if (stateValue === 'Charging') {
+                  stateBadge.style.backgroundColor = '#ff9800';
+                  stateBadge.style.color = 'white';
+                } else if (stateValue === 'Available') {
+                  stateBadge.style.backgroundColor = '#4caf50';
+                  stateBadge.style.color = 'white';
+                } else if (stateValue === 'Preparing') {
+                  stateBadge.style.backgroundColor = '#2196f3';
+                  stateBadge.style.color = 'white';
+                }
+              }
+              
+              // Update plug status badge
+              const plugBadge = document.getElementById('plug-badge-' + conn.id);
+              if (plugBadge) {
+                plugBadge.textContent = conn.pluggedIn ? '🔌 Plugged In' : '🔌 Not Plugged';
+                plugBadge.className = 'plug-status badge ' + (conn.pluggedIn ? 'plugged' : 'unplugged');
+              }
+              
+              // Update plugged status text
+              const pluggedStatus = document.getElementById('plugged-status-' + conn.id);
+              if (pluggedStatus) {
+                pluggedStatus.textContent = conn.pluggedIn ? 'Yes' : 'No';
+              }
+              
+              // Update transaction ID
+              const transactionEl = document.getElementById('transaction-' + conn.id);
+              if (transactionEl) {
+                transactionEl.textContent = conn.transactionId || '-';
+              }
+              
+              // Update meter value
+              const meterEl = document.getElementById('meter-' + conn.id);
+              if (meterEl) {
+                meterEl.textContent = conn.meterWh;
+              }
+              
+              // Update start button state
+              const startBtn = document.getElementById('startBtn-' + conn.id);
+              if (startBtn) {
+                if (conn.pluggedIn) {
+                  startBtn.disabled = false;
+                  startBtn.removeAttribute('title');
+                } else {
+                  startBtn.disabled = true;
+                  startBtn.setAttribute('title', 'EV must be plugged in to start charging');
+                }
+              }
+            });
+          }
         })
         .catch(err => console.error('Error fetching connector status:', err));
     }, 2000);
+    
+    // Also update immediately on page load
+    window.addEventListener('DOMContentLoaded', () => {
+      fetch('/api/connectors')
+        .then(res => res.json())
+        .then(data => {
+          if (data.connectors) {
+            data.connectors.forEach(conn => {
+              // Update all display elements (same logic as interval)
+              const stateBadge = document.getElementById('state-badge-' + conn.id);
+              if (stateBadge) {
+                stateBadge.textContent = conn.state;
+                stateBadge.className = 'state badge';
+                if (conn.state === 'Charging') {
+                  stateBadge.style.backgroundColor = '#ff9800';
+                  stateBadge.style.color = 'white';
+                } else if (conn.state === 'Available') {
+                  stateBadge.style.backgroundColor = '#4caf50';
+                  stateBadge.style.color = 'white';
+                } else if (conn.state === 'Preparing') {
+                  stateBadge.style.backgroundColor = '#2196f3';
+                  stateBadge.style.color = 'white';
+                }
+              }
+              
+              const plugBadge = document.getElementById('plug-badge-' + conn.id);
+              if (plugBadge) {
+                plugBadge.textContent = conn.pluggedIn ? '🔌 Plugged In' : '🔌 Not Plugged';
+                plugBadge.className = 'plug-status badge ' + (conn.pluggedIn ? 'plugged' : 'unplugged');
+              }
+              
+              const pluggedStatus = document.getElementById('plugged-status-' + conn.id);
+              if (pluggedStatus) {
+                pluggedStatus.textContent = conn.pluggedIn ? 'Yes' : 'No';
+              }
+              
+              const transactionEl = document.getElementById('transaction-' + conn.id);
+              if (transactionEl) {
+                transactionEl.textContent = conn.transactionId || '-';
+              }
+              
+              const meterEl = document.getElementById('meter-' + conn.id);
+              if (meterEl) {
+                meterEl.textContent = conn.meterWh;
+              }
+              
+              const startBtn = document.getElementById('startBtn-' + conn.id);
+              if (startBtn && conn.pluggedIn) {
+                startBtn.disabled = false;
+                startBtn.removeAttribute('title');
+              }
+            });
+          }
+        })
+        .catch(err => console.error('Error fetching connector status:', err));
+    });
   </script>
 </body>
 </html>
