@@ -1,6 +1,0 @@
-{"location":"Database.js:3","message":"Before requiring better-sqlite3","data":{"nodeVersion":"v24.11.1","nodeModuleVersion":"137"},"timestamp":1765622544209,"sessionId":"debug-session","runId":"run1","hypothesisId":"A"}
-{"location":"Database.js:8","message":"better-sqlite3 loaded successfully","data":{"nodeVersion":"v24.11.1","nodeModuleVersion":"137"},"timestamp":1765622544273,"sessionId":"debug-session","runId":"post-fix","hypothesisId":"C"}
-{"location":"Database.js:3","message":"Before requiring better-sqlite3","data":{"nodeVersion":"v24.11.1","nodeModuleVersion":"137"},"timestamp":1765622967597,"sessionId":"debug-session","runId":"run1","hypothesisId":"A"}
-{"location":"Database.js:8","message":"better-sqlite3 loaded successfully","data":{"nodeVersion":"v24.11.1","nodeModuleVersion":"137"},"timestamp":1765622967655,"sessionId":"debug-session","runId":"post-fix","hypothesisId":"C"}
-{"location":"Database.js:3","message":"Before requiring better-sqlite3","data":{"nodeVersion":"v24.11.1","nodeModuleVersion":"137"},"timestamp":1765622972087,"sessionId":"debug-session","runId":"run1","hypothesisId":"A"}
-{"location":"Database.js:8","message":"better-sqlite3 loaded successfully","data":{"nodeVersion":"v24.11.1","nodeModuleVersion":"137"},"timestamp":1765622972122,"sessionId":"debug-session","runId":"post-fix","hypothesisId":"C"}

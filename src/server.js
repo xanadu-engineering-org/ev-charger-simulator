@@ -1,12 +1,7 @@
 require('dotenv').config();
 const path = require('path');
 const express = require('express');
-let Database;
-try {
-  Database = require('./db/Database');
-} catch (err) {
-  throw err;
-}
+const Database = require('./db/Database');
 const ChargerState = require('./charger/ChargerState');
 const OcppClient = require('./ocpp/OcppClient');
 

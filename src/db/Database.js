@@ -1,28 +1,6 @@
 const path = require('path');
 const fs = require('fs');
-// #region agent log
-fetch('http://127.0.0.1:7243/ingest/20fc2c36-7f99-43af-85b8-6abf4fc6304b',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'Database.js:3',message:'Before requiring better-sqlite3',data:{nodeVersion:process.version,nodeModuleVersion:process.versions.modules},timestamp:Date.now(),sessionId:'debug-session',runId:'run1',hypothesisId:'A'})}).catch(()=>{});
-// #endregion
-let DatabaseDriver;
-try {
-  DatabaseDriver = require('better-sqlite3');
-  // #region agent log
-  fetch('http://127.0.0.1:7243/ingest/20fc2c36-7f99-43af-85b8-6abf4fc6304b',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'Database.js:8',message:'better-sqlite3 loaded successfully',data:{nodeVersion:process.version,nodeModuleVersion:process.versions.modules},timestamp:Date.now(),sessionId:'debug-session',runId:'post-fix',hypothesisId:'C'})}).catch(()=>{});
-  // #endregion
-} catch (err) {
-  // #region agent log
-  const betterSqlite3Path = require.resolve('better-sqlite3');
-  const nativeModulePath = require('path').join(require('path').dirname(betterSqlite3Path), '../build/Release/better_sqlite3.node');
-  let nativeModuleExists = false;
-  let nativeModuleStats = null;
-  try {
-    nativeModuleStats = fs.statSync(nativeModulePath);
-    nativeModuleExists = true;
-  } catch (e) {}
-  fetch('http://127.0.0.1:7243/ingest/20fc2c36-7f99-43af-85b8-6abf4fc6304b',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'Database.js:17',message:'Error loading better-sqlite3',data:{errorMessage:err.message,errorCode:err.code,nativeModulePath,nativeModuleExists,nativeModuleStats:nativeModuleStats?{size:nativeModuleStats.size,mtime:nativeModuleStats.mtime}:null,nodeVersion:process.version,nodeModuleVersion:process.versions.modules},timestamp:Date.now(),sessionId:'debug-session',runId:'run1',hypothesisId:'D'})}).catch(()=>{});
-  // #endregion
-  throw err;
-}
+const DatabaseDriver = require('better-sqlite3');
 
 class Database {
   constructor(dbPath) {
