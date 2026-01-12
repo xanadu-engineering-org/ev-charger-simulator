@@ -1,22 +1,6 @@
 require('dotenv').config();
-// #region agent log
-const fs = require('fs');
 const path = require('path');
-const logPath = path.join(process.cwd(), '.cursor', 'debug.log');
-try {
-  const logDir = path.dirname(logPath);
-  if (!fs.existsSync(logDir)) fs.mkdirSync(logDir, { recursive: true });
-  const logData = JSON.stringify({ location: 'server.js:2', message: 'Server startup - path diagnostics', data: { cwd: process.cwd(), __dirname: __dirname, execPath: process.execPath, argv: process.argv, nodeVersion: process.version, serverJsPath: path.join(__dirname, 'server.js'), serverJsExists: fs.existsSync(path.join(__dirname, 'server.js')), packageJsonPath: path.join(process.cwd(), 'package.json'), packageJsonExists: fs.existsSync(path.join(process.cwd(), 'package.json')), srcServerJsPath: path.join(process.cwd(), 'src', 'server.js'), srcServerJsExists: fs.existsSync(path.join(process.cwd(), 'src', 'server.js')) }, timestamp: Date.now(), sessionId: 'debug-session', runId: 'run1', hypothesisId: 'A' }) + '\n';
-  fs.appendFileSync(logPath, logData);
-} catch (e) { }
-// #endregion
 const express = require('express');
-// #region agent log
-try {
-  const logData = JSON.stringify({ location: 'server.js:16', message: 'Before requiring Database', data: { cwd: process.cwd(), __dirname: __dirname, dbPath: path.join(__dirname, 'db', 'Database.js'), dbExists: fs.existsSync(path.join(__dirname, 'db', 'Database.js')) }, timestamp: Date.now(), sessionId: 'debug-session', runId: 'run1', hypothesisId: 'B' }) + '\n';
-  fs.appendFileSync(logPath, logData);
-} catch (e) { }
-// #endregion
 const Database = require('./db/Database');
 const ChargerState = require('./charger/ChargerState');
 const OcppClient = require('./ocpp/OcppClient');
