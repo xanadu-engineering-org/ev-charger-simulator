@@ -90,7 +90,7 @@ class OcppClient extends EventEmitter {
     this.ws.send(raw);
   }
 
-  sendCall(action, payload) {
+  async sendCall(action, payload) {
     if (!this.isConnected()) {
       return Promise.reject(new Error('WebSocket not connected'));
     }
