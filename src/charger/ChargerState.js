@@ -42,7 +42,7 @@ class ChargerState extends EventEmitter {
         connector.meterWh += 50;
         const value = connector.meterWh;
         if (connector.sessionId) {
-          this.db.insertMeterValue(connector.sessionId, value, { valueWh: value });
+          await this.db.insertMeterValue(connector.sessionId, value, { valueWh: value });
         }
         if (this.ocppClient && this.ocppClient.isReady()) {
           await this.ocppClient.sendMeterValues(connector.id, txId, value);
@@ -157,7 +157,7 @@ class ChargerState extends EventEmitter {
     }
     const transactionId = txResp.transactionId;
     connector.transactionId = transactionId;
-    connector.sessionId = this.db.createSession({
+    connector.sessionId = await this.db.createSession({
       transactionId,
       connectorId,
       idTag,
@@ -188,7 +188,7 @@ class ChargerState extends EventEmitter {
       // swallow stop errors; still clean up locally
     }
     if (connector.sessionId) {
-      this.db.endSession(connector.sessionId, {
+      await this.db.endSession(connector.sessionId, {
         endTime: stopTime,
         meterStop,
         stopReason: reason,

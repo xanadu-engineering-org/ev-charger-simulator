@@ -96,7 +96,7 @@ class OcppClient extends EventEmitter {
     }
     const uid = this.nextId();
     const frame = [2, uid, action, payload];
-    this.db.logOcpp('->', action, frame);
+    await this.db.logOcpp('->', action, frame);
     this.sendRaw(frame);
     return new Promise((resolve, reject) => {
       this.pending.set(uid, { resolve, reject, action });
@@ -109,15 +109,15 @@ class OcppClient extends EventEmitter {
     });
   }
 
-  sendCallResult(uid, payload, actionLabel) {
+  async sendCallResult(uid, payload, actionLabel) {
     const frame = [3, uid, payload];
-    this.db.logOcpp('->', actionLabel || 'CallResult', frame);
+    await this.db.logOcpp('->', actionLabel || 'CallResult', frame);
     this.sendRaw(frame);
   }
 
-  sendCallError(uid, errorCode, text, details = {}) {
+  async sendCallError(uid, errorCode, text, details = {}) {
     const frame = [4, uid, errorCode, text, details];
-    this.db.logOcpp('->', 'CallError', frame);
+    await this.db.logOcpp('->', 'CallError', frame);
     this.sendRaw(frame);
   }
 
@@ -219,7 +219,7 @@ class OcppClient extends EventEmitter {
       const pending = this.pending.get(uid);
       if (pending) {
         this.pending.delete(uid);
-        this.db.logOcpp('<-', pending.action || 'CALLRESULT', msg);
+        await this.db.logOcpp('<-', pending.action || 'CALLRESULT', msg);
         pending.resolve(actionOrPayload);
       }
       return;
@@ -228,7 +228,7 @@ class OcppClient extends EventEmitter {
       const pending = this.pending.get(uid);
       if (pending) {
         this.pending.delete(uid);
-        this.db.logOcpp('<-', pending.action || 'CALLERROR', msg);
+        await this.db.logOcpp('<-', pending.action || 'CALLERROR', msg);
         pending.reject(new Error(`${actionOrPayload}: ${payloadMaybe}`));
       }
       return;
@@ -236,7 +236,7 @@ class OcppClient extends EventEmitter {
     if (messageTypeId === 2) {
       const action = actionOrPayload;
       const payload = payloadMaybe;
-      this.db.logOcpp('<-', action, msg);
+      await this.db.logOcpp('<-', action, msg);
       switch (action) {
         case 'RemoteStartTransaction':
           this.handleRemoteStart(uid, payload);
@@ -251,7 +251,7 @@ class OcppClient extends EventEmitter {
           this.handleGetConfiguration(uid, payload);
           break;
         default:
-          this.sendCallError(uid, 'NotSupported', 'Unsupported action');
+          await this.sendCallError(uid, 'NotSupported', 'Unsupported action');
       }
     }
   }
@@ -260,17 +260,17 @@ class OcppClient extends EventEmitter {
     const { connectorId = 1, idTag } = payload;
     const result = await this.chargerState.remoteStart({ connectorId, idTag });
     const status = result.ok ? 'Accepted' : 'Rejected';
-    this.sendCallResult(uid, { status }, 'RemoteStartTransaction');
+    await this.sendCallResult(uid, { status }, 'RemoteStartTransaction');
   }
 
   async handleRemoteStop(uid, payload) {
     const { transactionId } = payload;
     const result = await this.chargerState.remoteStop({ transactionId });
     const status = result.ok ? 'Accepted' : 'Rejected';
-    this.sendCallResult(uid, { status }, 'RemoteStopTransaction');
+    await this.sendCallResult(uid, { status }, 'RemoteStopTransaction');
   }
 
-  handleChangeConfiguration(uid, payload) {
+  async handleChangeConfiguration(uid, payload) {
     const { key, value } = payload;
     if (key === 'HeartbeatInterval') {
       const newVal = Number(value);
@@ -280,17 +280,17 @@ class OcppClient extends EventEmitter {
         this.startHeartbeat();
       }
     }
-    this.sendCallResult(uid, { status: 'Accepted' }, 'ChangeConfiguration');
+    await this.sendCallResult(uid, { status: 'Accepted' }, 'ChangeConfiguration');
   }
 
-  handleGetConfiguration(uid, payload) {
+  async handleGetConfiguration(uid, payload) {
     const keys = payload.key || Object.keys(this.configMap);
     const configurationKey = keys.map((key) => ({
       key,
       readonly: false,
       value: this.configMap[key] !== undefined ? String(this.configMap[key]) : '',
     }));
-    this.sendCallResult(uid, { configurationKey }, 'GetConfiguration');
+    await this.sendCallResult(uid, { configurationKey }, 'GetConfiguration');
   }
 }
 

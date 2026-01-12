@@ -1,5 +1,5 @@
 CREATE TABLE IF NOT EXISTS sessions (
-  id INTEGER PRIMARY KEY AUTOINCREMENT,
+  id SERIAL PRIMARY KEY,
   transaction_id INTEGER,
   connector_id INTEGER,
   id_tag TEXT,
@@ -11,7 +11,7 @@ CREATE TABLE IF NOT EXISTS sessions (
 );
 
 CREATE TABLE IF NOT EXISTS meter_values (
-  id INTEGER PRIMARY KEY AUTOINCREMENT,
+  id SERIAL PRIMARY KEY,
   session_id INTEGER,
   ts TEXT,
   value_wh INTEGER,
@@ -19,7 +19,7 @@ CREATE TABLE IF NOT EXISTS meter_values (
 );
 
 CREATE TABLE IF NOT EXISTS ocpp_logs (
-  id INTEGER PRIMARY KEY AUTOINCREMENT,
+  id SERIAL PRIMARY KEY,
   ts TEXT,
   direction TEXT,
   action TEXT,

@@ -14,40 +14,10 @@ app.use('/public', express.static(path.join(__dirname, 'public')));
 app.use(express.urlencoded({ extended: true }));
 app.use(express.json());
 
-const dbPath = path.join(__dirname, 'ocpp-sim.db');
-const db = new Database(dbPath);
-const connectorCount = Number(process.env.CONNECTORS || 2);
-const chargerState = new ChargerState({ connectorCount, db });
-
-const CSMS_SERVER_BASE_URL = process.env.CSMS_SERVER_BASE_URL || 'http://localhost:3020';
-const CSMS_WEBSOCKET_BASE_URL = process.env.CSMS_WEBSOCKET_BASE_URL || 'ws://localhost:3020';
-const CHARGE_POINT_ID = process.env.CHARGE_POINT_ID || 'ME-001';
-
-let ocppUrl;
-if (process.env.OCPP_URL) {
-  ocppUrl = process.env.OCPP_URL;
-} else {
-  const wsBase = CSMS_WEBSOCKET_BASE_URL.replace(/\/$/, '');
-  ocppUrl = `${wsBase}/ocpp`;
-}
-
-let connectionConfig = {
-  ocppUrl: ocppUrl,
-  csmsServerBaseUrl: CSMS_SERVER_BASE_URL,
-  csmsWebSocketBaseUrl: CSMS_WEBSOCKET_BASE_URL,
-  chargePointId: CHARGE_POINT_ID,
-  chargePointVendor: process.env.CHARGE_POINT_VENDOR || 'MetroElectric',
-  chargePointModel: process.env.CHARGE_POINT_MODEL || 'Virtual-1',
-};
-
-let ocppClient = new OcppClient({
-  chargePointId: connectionConfig.chargePointId,
-  chargePointVendor: connectionConfig.chargePointVendor,
-  chargePointModel: connectionConfig.chargePointModel,
-  db,
-  chargerState,
-});
-chargerState.setOcppClient(ocppClient);
+let db;
+let chargerState;
+let ocppClient;
+let connectionConfig;
 
 app.get('/api/connectors', (req, res) => {
   const connectors = chargerState.getConnectors().map(conn => ({
@@ -173,8 +143,8 @@ app.post('/actions/:connector/:command', async (req, res) => {
   }
 });
 
-app.get('/logs', (req, res) => {
-  const logs = db.listLogs(300);
+app.get('/logs', async (req, res) => {
+  const logs = await db.listLogs(300);
   res.render('logs', { logs });
 });
 
@@ -191,6 +161,50 @@ process.on('uncaughtException', (err) => {
   console.error('Uncaught exception:', err);
 });
 
-app.listen(PORT, () => {
-  console.log(`OCPP simulator running on http://localhost:${PORT}`);
-});
+(async () => {
+  try {
+    // Initialize database
+    db = new Database(process.env.DATABASE_URL);
+    await db.ensureSchema();
+
+    const connectorCount = Number(process.env.CONNECTORS || 2);
+    chargerState = new ChargerState({ connectorCount, db });
+
+    const CSMS_SERVER_BASE_URL = process.env.CSMS_SERVER_BASE_URL || 'http://localhost:3020';
+    const CSMS_WEBSOCKET_BASE_URL = process.env.CSMS_WEBSOCKET_BASE_URL || 'ws://localhost:3020';
+    const CHARGE_POINT_ID = process.env.CHARGE_POINT_ID || 'ME-001';
+
+    let ocppUrl;
+    if (process.env.OCPP_URL) {
+      ocppUrl = process.env.OCPP_URL;
+    } else {
+      const wsBase = CSMS_WEBSOCKET_BASE_URL.replace(/\/$/, '');
+      ocppUrl = `${wsBase}/ocpp`;
+    }
+
+    connectionConfig = {
+      ocppUrl: ocppUrl,
+      csmsServerBaseUrl: CSMS_SERVER_BASE_URL,
+      csmsWebSocketBaseUrl: CSMS_WEBSOCKET_BASE_URL,
+      chargePointId: CHARGE_POINT_ID,
+      chargePointVendor: process.env.CHARGE_POINT_VENDOR || 'MetroElectric',
+      chargePointModel: process.env.CHARGE_POINT_MODEL || 'Virtual-1',
+    };
+
+    ocppClient = new OcppClient({
+      chargePointId: connectionConfig.chargePointId,
+      chargePointVendor: connectionConfig.chargePointVendor,
+      chargePointModel: connectionConfig.chargePointModel,
+      db,
+      chargerState,
+    });
+    chargerState.setOcppClient(ocppClient);
+
+    app.listen(PORT, () => {
+      console.log(`OCPP simulator running on http://localhost:${PORT}`);
+    });
+  } catch (err) {
+    console.error('Failed to initialize application:', err);
+    process.exit(1);
+  }
+})();
