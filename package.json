@@ -4,7 +4,7 @@
   "description": "Node.js OCPP 1.6J Charge Point simulator with Express, EJS, SQLite, and WebSocket client.",
   "main": "src/server.js",
   "scripts": {
-    "start": "node src/server.js",
+    "start": "node ./src/server.js",
     "dev": "node --watch src/server.js"
   },
   "keywords": [

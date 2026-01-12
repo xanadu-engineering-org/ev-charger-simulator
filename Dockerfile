@@ -7,7 +7,6 @@ RUN npm ci --omit=dev
 
 # Copy application code
 COPY src ./src
-COPY server.js ./
 
 ENV PORT=3030
 EXPOSE 3030

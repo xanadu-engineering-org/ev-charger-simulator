@@ -1,0 +1,11 @@
+services:
+  - type: web
+    name: ev-charger-simulator
+    env: node
+    buildCommand: npm install
+    startCommand: npm start
+    envVars:
+      - key: PORT
+        value: 3030
+      - key: NODE_ENV
+        value: production
