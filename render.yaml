@@ -9,7 +9,7 @@ services:
         value: 3030
       - key: NODE_ENV
         value: production
-      - key: DATABASE_URL
+      - key: MONGODB_URI
         fromDatabase:
           name: ev-charger-db
           property: connectionString
