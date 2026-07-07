@@ -173,7 +173,8 @@ class ChargerState extends EventEmitter {
     const connector = this.connectors[connectorId - 1];
     const txId = connector.transactionId;
     if (!txId) {
-      await this.transition(connector, STATES.AVAILABLE);
+      const idleState = connector.pluggedIn ? STATES.PREPARING : STATES.AVAILABLE;
+      await this.transition(connector, idleState);
       return { ok: false, message: 'No active transaction' };
     }
 
@@ -196,7 +197,8 @@ class ChargerState extends EventEmitter {
     }
     connector.transactionId = null;
     connector.sessionId = null;
-    await this.transition(connector, STATES.AVAILABLE);
+    const idleState = connector.pluggedIn ? STATES.PREPARING : STATES.AVAILABLE;
+    await this.transition(connector, idleState);
     return { ok: true };
   }
 

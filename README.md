@@ -168,3 +168,5 @@ README.md
   validate vendor/model.
 - Meter values not appearing: ensure charging is active and heartbeat/status are
   accepted; check logs page for outgoing `MeterValues`.
+
+ws://192.168.1.160:3020/ocpp/ME-001

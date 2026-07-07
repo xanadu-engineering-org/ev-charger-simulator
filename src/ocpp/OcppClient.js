@@ -239,16 +239,16 @@ class OcppClient extends EventEmitter {
       await this.db.logOcpp('<-', action, msg);
       switch (action) {
         case 'RemoteStartTransaction':
-          this.handleRemoteStart(uid, payload);
+          await this.handleRemoteStart(uid, payload);
           break;
         case 'RemoteStopTransaction':
-          this.handleRemoteStop(uid, payload);
+          await this.handleRemoteStop(uid, payload);
           break;
         case 'ChangeConfiguration':
-          this.handleChangeConfiguration(uid, payload);
+          await this.handleChangeConfiguration(uid, payload);
           break;
         case 'GetConfiguration':
-          this.handleGetConfiguration(uid, payload);
+          await this.handleGetConfiguration(uid, payload);
           break;
         default:
           await this.sendCallError(uid, 'NotSupported', 'Unsupported action');
