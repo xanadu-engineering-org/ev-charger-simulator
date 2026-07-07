@@ -164,7 +164,7 @@ process.on('uncaughtException', (err) => {
 (async () => {
   try {
     // Initialize database
-    db = new Database(process.env.DATABASE_URL);
+    db = new Database();
     await db.ensureSchema();
 
     const connectorCount = Number(process.env.CONNECTORS || 2);

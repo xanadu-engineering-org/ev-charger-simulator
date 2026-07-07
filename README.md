@@ -1,7 +1,7 @@
 # OCPP 1.6J Charge Point Simulator
 
 Node.js single-app simulator for an OCPP 1.6J charge point. Runs Express + EJS
-server-side UI, a WebSocket OCPP client, a charger state machine, and MongoDB
+server-side UI, a WebSocket OCPP client, a charger state machine, and SQLite
 persistence (sessions, meter values, OCPP logs). No frontend frameworks
 required.
 
@@ -14,8 +14,7 @@ required.
   / GetConfiguration.
 - Charger state machine (Available, Preparing, Charging, SuspendedEV, Finishing,
   Faulted) with simulated meter increments.
-- MongoDB via the official driver for sessions, meter values, and OCPP message
-  logs.
+- SQLite-backed persistence for sessions, meter values, and OCPP message logs.
 - Server-rendered UI (EJS) to control connector: present token, plug/unplug,
   local start/stop, view logs.
 - Dockerfile for containerized runs.
@@ -23,7 +22,6 @@ required.
 ## Prerequisites
 
 - Node.js 18+ (Node 20 recommended) and npm, or Docker.
-- MongoDB database (local or remote).
 - No network install needed at runtime if node_modules are present; otherwise
   run `npm install`.
 
@@ -52,9 +50,6 @@ Environment variables (via `.env` or inline):
 - `CHARGE_POINT_VENDOR` (default `MetroElectric`)
 - `CHARGE_POINT_MODEL` (default `Virtual-1`)
 - `CONNECTORS` (default `2`; set to `1` to force single connector)
-- `DATABASE_URL` (required) - MongoDB connection string, e.g.,
-  `mongodb://user:password@host:port/database`
-- `MONGODB_DB` (optional) - database name override if not provided in the URI
 
 ### URL Configuration Examples
 
@@ -77,8 +72,8 @@ OCPP_URL=ws://localhost:3020/ocpp/ME-001
 If `OCPP_URL` is explicitly set, it takes precedence over the base URL
 configuration.
 
-MongoDB database: Collections and indexes are created automatically on first
-run. Ensure your `DATABASE_URL` points to a valid MongoDB database.
+SQLite schema and indexes are created automatically on first run. The simulator
+stores data in `ocpp-sim.db` in the project root.
 
 ## Running in Docker
 
@@ -90,7 +85,6 @@ docker run -p 3030:3030 \
   -e CSMS_SERVER_BASE_URL=http://host.docker.internal:3020 \
   -e CSMS_WEBSOCKET_BASE_URL=ws://host.docker.internal:3020 \
   -e CHARGE_POINT_ID=ME-001 \
-  -e DATABASE_URL=mongodb://user:password@host:port/database \
   ev-charger-sim
 ```
 
@@ -100,11 +94,10 @@ Or using the explicit OCPP_URL (backward compatible):
 docker run -p 3030:3030 \
   -e OCPP_URL=ws://host.docker.internal:3020/ocpp \
   -e CHARGE_POINT_ID=ME-001 \
-  -e DATABASE_URL=mongodb://user:password@host:port/database \
   ev-charger-sim
 ```
 
-Ensure your MongoDB database is accessible from the container.
+Ensure the container can write to `ocpp-sim.db` in the app directory.
 
 ## Usage
 

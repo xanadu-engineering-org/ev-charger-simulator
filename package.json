@@ -1,7 +1,7 @@
 {
   "name": "ev_charger_simulator",
   "version": "1.0.0",
-  "description": "Node.js OCPP 1.6J Charge Point simulator with Express, EJS, MongoDB, and WebSocket client.",
+  "description": "Node.js OCPP 1.6J charge point simulator with Express, EJS, SQLite, and a WebSocket client.",
   "main": "src/server.js",
   "scripts": {
     "start": "node src/server.js",
@@ -12,7 +12,7 @@
     "chargepoint",
     "simulator",
     "express",
-    "mongodb"
+    "sqlite"
   ],
   "author": "",
   "license": "ISC",
@@ -20,7 +20,7 @@
     "dotenv": "^17.2.3",
     "ejs": "^3.1.10",
     "express": "^5.1.0",
-    "mongodb": "^6.10.0",
+    "sqlite3": "^6.0.1",
     "ws": "^8.18.3"
   }
 }
